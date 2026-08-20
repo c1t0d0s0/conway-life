@@ -2,7 +2,6 @@
 
 A modern, responsive, and minimalist **Conway's Game of Life** web application built with pure HTML5, CSS3, and JavaScript.
 
-![Conway's Game of Life](https://raw.githubusercontent.com/google/gemini-cli/main/assets/conway-banner.png)
 
 ## Features
 
