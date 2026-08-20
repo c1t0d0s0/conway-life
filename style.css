@@ -111,6 +111,7 @@ html, body {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-shrink: 0;
 }
 
 .stat-badge {
@@ -122,11 +123,14 @@ html, body {
     padding: 4px 10px;
     border-radius: var(--radius-full);
     font-size: 13px;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .stat-label {
     color: var(--text-secondary);
     font-weight: 500;
+    white-space: nowrap;
 }
 
 .stat-value {
@@ -134,6 +138,7 @@ html, body {
     font-weight: 700;
     color: var(--text-primary);
     min-width: 28px;
+    white-space: nowrap;
 }
 
 .header-right {
@@ -911,6 +916,12 @@ kbd {
         display: none;
     }
 
+    .stat-badge {
+        padding: 3px 8px;
+        font-size: 12px;
+        gap: 4px;
+    }
+
     .presets-sidebar {
         position: fixed;
         bottom: 0;
@@ -970,5 +981,34 @@ kbd {
         gap: 8px;
         border-radius: var(--radius-md);
         padding: 8px 12px;
+    }
+}
+
+@media (max-width: 600px) {
+    .app-header {
+        padding: 6px 10px;
+        flex-wrap: wrap;
+        gap: 6px 10px;
+    }
+
+    .header-left {
+        order: 1;
+    }
+
+    .header-right {
+        order: 2;
+    }
+
+    .header-stats {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+        gap: 8px;
+        padding-top: 2px;
+    }
+
+    .stat-badge {
+        padding: 2px 8px;
+        font-size: 11px;
     }
 }

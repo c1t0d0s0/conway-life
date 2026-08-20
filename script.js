@@ -1322,14 +1322,19 @@
     // 12. Application Boot
     // =========================================================================
     function init() {
-        engine.init(50, 50);
+        const isMobile = window.innerWidth <= 768;
+        const defaultGridSize = isMobile ? 20 : 50;
+        engine.init(defaultGridSize, defaultGridSize);
+        selectGridSize.value = `${defaultGridSize}x${defaultGridSize}`;
+
         setSpeed(500); // 0.5s default
         attachEventListeners();
         setLanguage(currentLang);
         resizeCanvas();
 
         // Place a default welcoming pattern (Glider)
-        engine.placePatternAt(12, 12, PRESETS.spaceship[0].pattern);
+        const gliderPos = isMobile ? 5 : 12;
+        engine.placePatternAt(gliderPos, gliderPos, PRESETS.spaceship[0].pattern);
         render();
 
         // Start animation frame loop
