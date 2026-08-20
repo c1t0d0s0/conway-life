@@ -38,10 +38,10 @@ Each cell on the 2D grid interacts with its 8 horizontal, vertical, and diagonal
 
 | Rule | Condition | Next Generation State |
 | :--- | :--- | :--- |
-| **1. 誕生 (Birth)** | A dead cell with **exactly 3** live neighbors | **Becomes Alive** (■) |
-| **2. 生存 (Survival)** | A live cell with **2 or 3** live neighbors | **Stays Alive** (■) |
-| **3. 過疎 (Underpopulation)** | A live cell with **fewer than 2** live neighbors | **Dies** (□) |
-| **4. 過密 (Overpopulation)** | A live cell with **more than 3** live neighbors | **Dies** (□) |
+| **1. Birth** | A dead cell with **exactly 3** live neighbors | **Becomes Alive** (■) |
+| **2. Survival** | A live cell with **2 or 3** live neighbors | **Stays Alive** (■) |
+| **3. Underpopulation** | A live cell with **fewer than 2** live neighbors | **Dies** (□) |
+| **4. Overpopulation** | A live cell with **more than 3** live neighbors | **Dies** (□) |
 
 ---
 
@@ -70,23 +70,6 @@ conway-life/
 ├── README.ja.md     # Japanese documentation
 └── LICENSE          # MIT License
 ```
-
----
-
-## How to Run
-
-No build step or dependencies required.
-
-Simply open `index.html` in any modern web browser:
-
-```bash
-# Optional: run with a local static server
-python3 -m http.server 8080
-# or
-npx serve .
-```
-
-Then visit `http://localhost:8080` in your browser.
 
 ---
 
