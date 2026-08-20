@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Conway's Game of Life | ライフゲーム</title>
+    <meta name="description" content="A minimalist, monotone Conway's Game of Life web application with rich presets and interactive canvas.">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="app-logo">
+                    <span class="logo-icon">■</span>
+                    <h1 class="app-title" data-i18n="appTitle">Conway's Game of Life</h1>
+                </div>
+            </div>
+
+            <div class="header-stats">
+                <div class="stat-badge" title="Generation / 世代">
+                    <span class="stat-label" data-i18n="statGen">世代:</span>
+                    <span class="stat-value" id="genCount">0</span>
+                </div>
+                <div class="stat-badge" title="Population / 生存セル">
+                    <span class="stat-label" data-i18n="statPop">生存セル:</span>
+                    <span class="stat-value" id="popCount">0</span>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <button id="btnTogglePresets" class="btn btn-secondary icon-btn" title="Presets / プリセット" aria-label="Presets">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    <span class="btn-text" data-i18n="presetsBtn">プリセット</span>
+                </button>
+
+                <button id="btnLangToggle" class="btn btn-secondary lang-btn" title="Switch Language / 言語切替">
+                    <span id="currentLangLabel">EN</span>
+                </button>
+
+                <button id="btnHelp" class="btn btn-secondary icon-btn" title="Help & Rules / ルール解説" aria-label="Help">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Body Area -->
+        <main class="main-layout">
+            <!-- Canvas Area -->
+            <section class="canvas-section">
+                <!-- Preset Active Banner (shown when stamping a pattern) -->
+                <div id="placementBanner" class="placement-banner hidden">
+                    <div class="placement-info">
+                        <span class="placement-badge" data-i18n="placementMode">配置モード:</span>
+                        <strong id="placementPatternName">-</strong>
+                        <span id="placementDimensions" class="placement-dim">(0x0)</span>
+                    </div>
+                    <div class="placement-actions">
+                        <button id="btnRotatePattern" class="btn btn-small btn-secondary" title="Rotate 90° (Hotkey: Z / R)">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                            </svg>
+                            <span data-i18n="btnRotate">回転 (90°)</span>
+                        </button>
+                        <button id="btnPlaceCenter" class="btn btn-small btn-secondary" data-i18n="btnPlaceCenter">中央に配置</button>
+                        <button id="btnCancelPlacement" class="btn btn-small btn-danger" data-i18n="btnCancel">キャンセル</button>
+                    </div>
+                </div>
+
+                <!-- Canvas Container -->
+                <div class="canvas-wrapper" id="canvasWrapper">
+                    <canvas id="lifeCanvas"></canvas>
+                    <div id="canvasOverlayHint" class="canvas-hint">
+                        <span data-i18n="canvasHint">クリックまたはドラッグしてセルを描画</span>
+                    </div>
+                </div>
+
+                <!-- Control Bar -->
+                <div class="control-panel">
+                    <!-- Playback Controls -->
+                    <div class="control-group playback-group">
+                        <button id="btnPlayPause" class="btn btn-primary main-play-btn" title="Play/Pause (Space)">
+                            <svg id="playIcon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                            <svg id="pauseIcon" class="hidden" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                <rect x="6" y="4" width="4" height="16"></rect>
+                                <rect x="14" y="4" width="4" height="16"></rect>
+                            </svg>
+                            <span id="playPauseText" data-i18n="btnPlay">再生</span>
+                        </button>
+
+                        <button id="btnStep" class="btn btn-secondary" title="Next Generation (S / ArrowRight)">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                <polygon points="5 4 15 12 5 20 5 4"></polygon>
+                                <line x1="19" y1="4" x2="19" y2="20" stroke="currentColor" stroke-width="2"></line>
+                            </svg>
+                            <span class="btn-label-desktop" data-i18n="btnStep">1世代進む</span>
+                        </button>
+
+                        <button id="btnRandom" class="btn btn-secondary" title="Randomize (R)">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="16 3 21 3 21 8"></polyline>
+                                <line x1="4" y1="20" x2="21" y2="3"></line>
+                                <polyline points="21 16 21 21 16 21"></polyline>
+                                <line x1="15" y1="15" x2="21" y2="21"></line>
+                                <line x1="4" y1="4" x2="9" y2="9"></line>
+                            </svg>
+                            <span class="btn-label-desktop" data-i18n="btnRandom">ランダム</span>
+                        </button>
+
+                        <button id="btnClear" class="btn btn-secondary" title="Clear Board (C)">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            <span class="btn-label-desktop" data-i18n="btnClear">全消去</span>
+                        </button>
+                    </div>
+
+                    <!-- Speed Controls -->
+                    <div class="control-group speed-group">
+                        <span class="control-label" data-i18n="labelSpeed">速度:</span>
+                        <button id="btnSpeedSlower" class="btn btn-mini btn-secondary" title="Slow Down">-</button>
+                        <input type="range" id="speedSlider" min="20" max="1000" step="20" value="500" title="Speed Slider (ms/generation)">
+                        <button id="btnSpeedFaster" class="btn btn-mini btn-secondary" title="Speed Up">+</button>
+                        <span id="speedValueLabel" class="speed-indicator">0.5s (2.0/s)</span>
+                    </div>
+
+                    <!-- Grid Size & Options -->
+                    <div class="control-group options-group">
+                        <div class="select-wrapper">
+                            <span class="control-label" data-i18n="labelSize">盤面:</span>
+                            <select id="selectGridSize" aria-label="Grid Size">
+                                <option value="10x10">10 x 10 (最小)</option>
+                                <option value="20x20">20 x 20</option>
+                                <option value="30x30">30 x 30</option>
+                                <option value="50x50" selected>50 x 50 (標準)</option>
+                                <option value="80x80">80 x 80</option>
+                                <option value="100x100">100 x 100</option>
+                                <option value="fit" data-i18n="sizeFit">画面にフィット</option>
+                                <option value="custom" data-i18n="sizeCustom">カスタム指定...</option>
+                            </select>
+                        </div>
+
+                        <!-- Grid Lines & Wrap Toggle -->
+                        <div class="toggles-wrapper">
+                            <button id="btnToggleWrap" class="btn btn-mini btn-secondary active" title="Toroidal Wrap / 境界ループ">
+                                <span data-i18n="toggleWrap">ループ: ON</span>
+                            </button>
+                            <button id="btnToggleGrid" class="btn btn-mini btn-secondary active" title="Show/Hide Grid Lines / グリッド線">
+                                <span data-i18n="toggleGrid">枠線: ON</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Preset Patterns Sidebar / Drawer -->
+            <aside id="presetsSidebar" class="presets-sidebar">
+                <div class="sidebar-header">
+                    <div class="sidebar-title">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                        <h2 data-i18n="presetsTitle">プリセットパターン</h2>
+                    </div>
+                    <button id="btnClosePresets" class="btn btn-mini btn-secondary close-sidebar-btn" aria-label="Close presets">✕</button>
+                </div>
+
+                <!-- Category Tabs -->
+                <nav class="preset-tabs" role="tablist">
+                    <button class="preset-tab active" data-category="still_life" role="tab" data-i18n="catStillLife">固定物体</button>
+                    <button class="preset-tab" data-category="oscillator" role="tab" data-i18n="catOscillator">振動子</button>
+                    <button class="preset-tab" data-category="spaceship" role="tab" data-i18n="catSpaceship">移動物体</button>
+                    <button class="preset-tab" data-category="methuselah" role="tab" data-i18n="catMethuselah">繁殖型</button>
+                </nav>
+
+                <!-- Patterns List Container -->
+                <div id="presetsList" class="presets-list">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </aside>
+        </main>
+
+        <!-- Help Modal -->
+        <div id="helpModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+            <div class="modal-card">
+                <header class="modal-header">
+                    <h2 id="modalTitle" data-i18n="helpTitle">ライフゲームの基本ルール & 使い方</h2>
+                    <button id="btnCloseHelp" class="modal-close-btn" aria-label="Close modal">✕</button>
+                </header>
+
+                <div class="modal-body">
+                    <!-- Rules Section -->
+                    <section class="rules-section">
+                        <h3 data-i18n="rulesHeading">■ 基本の4ルール</h3>
+                        <p class="rules-intro" data-i18n="rulesIntro">ライフゲームは、各セルの周囲8マス（隣接セル）の生存数によって、次の世代の生死が決まるシミュレーションです。</p>
+
+                        <div class="rules-grid">
+                            <div class="rule-card">
+                                <div class="rule-header">
+                                    <span class="rule-badge badge-birth">1</span>
+                                    <h4 data-i18n="rule1Title">誕生 (Birth)</h4>
+                                </div>
+                                <p data-i18n="rule1Desc">死んでいるセルに隣接する生きたセルが<strong>ちょうど3つ</strong>あれば、次の世代で新しい生命が誕生します。</p>
+                                <div class="rule-diagram">
+                                    <div class="diagram-cell dead"></div>
+                                    <div class="diagram-cell alive"></div>
+                                    <div class="diagram-cell dead"></div>
+                                    <div class="diagram-cell alive"></div>
+                                    <div class="diagram-cell center-target dead">0</div>
+                                    <div class="diagram-cell alive"></div>
+                                    <div class="diagram-cell dead"></div>
+                                    <div class="diagram-cell dead"></div>
+                                    <div class="diagram-cell dead"></div>
+                                </div>
+                                <div class="diagram-arrow" data-i18n="rule1Arrow">↓ 次世代: 誕生 ■</div>
+                            </div>
+
+                            <div class="rule-card">
+                                <div class="rule-header">
+                                    <span class="rule-badge badge-survival">2</span>
+                                    <h4 data-i18n="rule2Title">生存 (Survival)</h4>
+                                </div>
+                                <p data-i18n="rule2Desc">生きているセルに隣接する生きたセルが<strong>2つまたは3つ</strong>あれば、次の世代でも生存し続けます。</p>
+                                <div class="rule-diagram">
+                                    <div class="diagram-cell alive"></div>
+                                    <div class="diagram-cell dead"></div>
+                                    <div class="diagram-cell dead"></div>
+                                    <div class="diagram-cell dead"></div>
+                                    <div class="diagram-cell center-target alive">■</div>
+                                    <div class="diagram-cell alive"></div>
+                                    <div class="diagram-cell dead"></div>
+                                    <div class="diagram-cell dead"></div>
+                                    <div class="diagram-cell dead"></div>
+                                </div>
+                                <div class="diagram-arrow" data-i18n="rule2Arrow">↓ 次世代: 生存 ■</div>
+                            </div>
+
+                            <div class="rule-card">
+                                <div class="rule-header">
+                                    <span class="rule-badge badge-death">3</span>
+                                    <h4 data-i18n="rule3Title">過疎 (Underpopulation)</h4>
+                                </div>
+                                <p data-i18n="rule3Desc">生きているセルに隣接する生きたセルが<strong>1つ以下</strong>の場合、過疎により次の世代で死滅します。</p>
+                                <div class="rule-diagram">
+                                    <div class="diagram-cell dead"></div>
+                                    <div class="diagram-cell dead"></div>
+                                    <div class="diagram-cell dead"></div>
+                                    <div class="diagram-cell dead"></div>
+                                    <div class="diagram-cell center-target alive">■</div>
+                                    <div class="diagram-cell alive"></div>
+                                    <div class="diagram-cell dead"></div>
+                                    <div class="diagram-cell dead"></div>
+                                    <div class="diagram-cell dead"></div>
+                                </div>
+                                <div class="diagram-arrow" data-i18n="rule3Arrow">↓ 次世代: 死亡 □</div>
+                            </div>
+
+                            <div class="rule-card">
+                                <div class="rule-header">
+                                    <span class="rule-badge badge-death">4</span>
+                                    <h4 data-i18n="rule4Title">過密 (Overpopulation)</h4>
+                                </div>
+                                <p data-i18n="rule4Desc">生きているセルに隣接する生きたセルが<strong>4つ以上</strong>ある場合、過密により次の世代で死滅します。</p>
+                                <div class="rule-diagram">
+                                    <div class="diagram-cell alive"></div>
+                                    <div class="diagram-cell alive"></div>
+                                    <div class="diagram-cell alive"></div>
+                                    <div class="diagram-cell dead"></div>
+                                    <div class="diagram-cell center-target alive">■</div>
+                                    <div class="diagram-cell alive"></div>
+                                    <div class="diagram-cell dead"></div>
+                                    <div class="diagram-cell dead"></div>
+                                    <div class="diagram-cell dead"></div>
+                                </div>
+                                <div class="diagram-arrow" data-i18n="rule4Arrow">↓ 次世代: 死亡 □</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Controls & Shortcuts Section -->
+                    <section class="help-section">
+                        <h3 data-i18n="helpControlsHeading">■ 操作方法 & ショートカット</h3>
+                        <div class="shortcuts-table-wrapper">
+                            <table class="shortcuts-table">
+                                <thead>
+                                    <tr>
+                                        <th data-i18n="thAction">操作 / 機能</th>
+                                        <th data-i18n="thMethod">マウス・タッチ</th>
+                                        <th data-i18n="thKey">ショートカットキー</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td data-i18n="shCellDraw">セルの描画 / 消去</td>
+                                        <td data-i18n="shMouseDraw">クリックまたはドラッグ</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td data-i18n="shPlayPause">再生 / 一時停止</td>
+                                        <td data-i18n="shPlayBtn">再生ボタン</td>
+                                        <td><kbd>Space</kbd></td>
+                                    </tr>
+                                    <tr>
+                                        <td data-i18n="shStep">1世代進む (コマ送り)</td>
+                                        <td data-i18n="shStepBtn">進むボタン</td>
+                                        <td><kbd>S</kbd> / <kbd>→</kbd></td>
+                                    </tr>
+                                    <tr>
+                                        <td data-i18n="shClear">盤面を全消去</td>
+                                        <td data-i18n="shClearBtn">全消去ボタン</td>
+                                        <td><kbd>C</kbd></td>
+                                    </tr>
+                                    <tr>
+                                        <td data-i18n="shRandom">ランダム生成</td>
+                                        <td data-i18n="shRandomBtn">ランダムボタン</td>
+                                        <td><kbd>R</kbd></td>
+                                    </tr>
+                                    <tr>
+                                        <td data-i18n="shRotate">パターンの回転</td>
+                                        <td data-i18n="shRotateBtn">回転ボタン</td>
+                                        <td><kbd>Z</kbd></td>
+                                    </tr>
+                                    <tr>
+                                        <td data-i18n="shCancel">選択解除 / 閉じる</td>
+                                        <td data-i18n="shCancelBtn">キャンセル / ✕</td>
+                                        <td><kbd>Esc</kbd></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+
+                <footer class="modal-footer">
+                    <button id="btnModalCloseOk" class="btn btn-primary" data-i18n="btnUnderstand">閉じる</button>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script -->
+    <script src="script.js"></script>
+</body>
+</html>
